@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8">
+    <title>代理解析小幫手</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!--<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />-->
+    <link rel="stylesheet" href="./css/index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4E4EF3;
+            --muted: #6f7d8a;
+            --card-bg: #fff;
+            --page-bg: #EFF4FF;
+            --max-width: 1900px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--page-bg);
+            padding: 24px;
+            margin: 0
+        }
+
+        .el-card.is-always-shadow {
+            box-shadow: 0 4px 10px rgba(157, 161, 211, .15);
+        }
+
+        .el-select-dropdown {
+            border: 1px solid rgb(67, 81, 244) !important;
+            background-color: white !important;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+        }
+
+        .el-input {
+            box-shadow: 0 4px 10px rgba(157, 161, 211, .15);
+            font-size: 14px;
+        }
+
+        .el-input__inner {
+            padding: 20px !important;
+        }
+
+        .el-button {
+            height: 35px !important;
+            margin-top: 5px !important;
+            box-shadow: 0 4px 10px rgba(157, 161, 211, .6) !important;
+        }
+
+        .el-tabs--border-card {
+            border-radius: 20px !important;
+            box-shadow: none !important
+        }
+
+        .el-tabs__header.is-top {
+            border-top-left-radius: 20px !important;
+            border-top-right-radius: 20px !important;
+        }
+
+        .el-tabs__nav-scroll {
+            border-top-left-radius: 20px !important;
+            border-top-right-radius: 20px !important;
+        }
+
+        .el-message--success {
+            border: 1px solid #A0DB21 !important;
+        }
+
+        .el-select-dropdown__item:hover {
+            padding-right: calc(10px - 2.5px) !important;
+        }
+
+        .el-select-dropdown__item.is-selected {
+            padding-right: calc(10px - 2.5px) !important;
+        }
+
+        .el-dropdown-menu {
+            box-shadow: 0 4px 10px rgba(157, 161, 211, .15) !important;
+        }
+
+        #app {
+            max-width: var(--max-width);
+            width: 100%;
+            margin: 0 auto;
+            padding: 8px
+        }
+
+        .mini-pre {
+            background: #fbfdff;
+            border: 1px solid #eef6ff;
+            padding: 10px;
+            border-radius: 20px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 14px;
+            line-height: normal
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary)
+        }
+
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, #fff, #fbfdff);
+            border: 1px solid rgba(78, 78, 243, 0.06)
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .info-label i {
+            color: var(--primary);
+            width: 18px;
+            text-align: center
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #223
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.03)
+        }
+
+        .info-row .info-label {
+            flex: 0 0 36%;
+            max-width: 260px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        .info-row .info-label i {
+            width: 20px;
+            color: var(--primary)
+        }
+
+        .info-row .info-value {
+            flex: 1;
+            color: #223;
+            font-weight: 600;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word
+        }
+
+        @media (max-width:700px) {
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start
+            }
+
+            .info-row .info-label {
+                flex-basis: auto;
+                max-width: none
+            }
+        }
+
+        .qr-outer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            width: 100%
+        }
+
+        .qr-outer.blurred {
+            filter: blur(6px) grayscale(.25);
+            opacity: .6
+        }
+
+        .qr-img {
+            width: 100%;
+            height: auto;
+            max-width: 360px;
+            aspect-ratio: 1/1;
+            background: #fff;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(78, 78, 243, 0.06);
+            overflow: visible;
+            margin: 0 auto
+        }
+
+        .qr-img img,
+        .qr-img canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block
+        }
+
+        .qr-meta {
+            font-size: 13px;
+            color: var(--muted);
+            word-break: break-all;
+            text-align: center
+        }
+
+        @media (max-width:1400px) {
+            :root {
+                --max-width: 1400px
+            }
+
+            .qr-img {
+                max-width: 320px
+            }
+        }
+
+        @media (max-width:1300px) {
+            :root {
+                --max-width: 1300px
+            }
+
+            .qr-img {
+                max-width: 280px
+            }
+        }
+
+        @media (max-width:1000px) {
+            :root {
+                --max-width: 1000px
+            }
+
+            #app {
+                padding: 12px
+            }
+
+            .qr-img {
+                max-width: 100%;
+                height: auto
+            }
+
+            .info-box {
+                flex-direction: column;
+                align-items: flex-start
+            }
+
+            .mini-pre {
+                font-size: 13px
+            }
+
+            .main-columns>.el-col {
+                margin-top: 24px;
+            }
+
+            .main-columns>.el-col:first-child {
+                margin-top: 0;
+            }
+        }
+
+        @media (max-width:700px) {
+
+            /* 当列在窄屏堆叠时，上间距与其他卡片保持一致（24px） */
+            .main-columns>.el-col {
+                margin-top: 24px;
+            }
+
+            .main-columns>.el-col:first-child {
+                margin-top: 0;
+            }
+        }
+
+        /* 覆盖 Element UI 卡片默认圆角，统一为 20px */
+        .el-card {
+            border-radius: 20px !important;
+            box-shadow: 0 4px 10px rgba(157, 161, 211, .15) !important;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px
+        }
+
+        .el-button--primary {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        .el-button--primary:hover {
+            background-color: rgba(78, 78, 243, 0.9) !important;
+            border-color: rgba(78, 78, 243, 0.9) !important;
+        }
+
+        .el-button--primary:active,
+        .el-button--primary.is-active {
+            background-color: rgba(78, 78, 243, 0.8) !important;
+            border-color: rgba(78, 78, 243, 0.8) !important;
+        }
+
+        .el-tabs__active-bar {
+            background-color: var(--primary) !important;
+        }
+
+        .el-tabs__item.is-active {
+            color: var(--primary) !important;
+        }
+
+        .el-switch.is-checked .el-switch__core {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+
+        .el-checkbox__input.is-checked .el-checkbox__inner,
+        .el-radio__input.is-checked .el-radio__inner {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+
+        .el-tag--primary,
+        .el-tag.is-info {
+            background-color: rgba(78, 78, 243, 0.08) !important;
+            color: var(--primary) !important;
+            border-color: rgba(78, 78, 243, 0.12) !important;
+        }
+
+        .el-progress__bar-inner {
+            background-color: var(--primary) !important;
+        }
+
+        .el-link {
+            color: var(--primary) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" style="max-width:1300px;">
+        <el-card shadow="always" style="margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:22px;font-weight:600;color:#4E4EF3;"><i class="fas fa-info-circle"></i> {{
+                    L.appTitle }}
+                </div>
+                <div class="header-actions">
+                    <el-button type="primary" size="small" @click="openQrPage"><i class="fas fa-external-link"></i> {{
+                        L.openQr
+                        }}</el-button>
+                    <el-button size="small" @click.stop="copyLink">{{ L.copyLink }}</el-button>
+                    <el-dropdown @command="setLang">
+                        <el-button size="small">{{ lang === 'en' ? '選擇語言' : 'Language' }} <i
+                                class="el-icon-arrow-down el-icon--right"></i></el-button>
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="zh">繁體中文</el-dropdown-item>
+                            <el-dropdown-item command="en">English</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </div>
+            </div>
+        </el-card>
+
+        <el-card shadow="never" style="margin-bottom:24px;">
+            <div style="font-size:16px;font-weight:500;margin-bottom:12px;">{{ L.inputTitle }}</div>
+            <el-form :model="form" label-position="top">
+                <el-form-item :label="L.inputLabel">
+                    <el-input v-model="form.proxy" :placeholder="L.inputPlaceholder" clearable></el-input>
+                </el-form-item>
+            </el-form>
+            <el-alert :title="L.alertTitle" type="info" :closable="false" style="margin-bottom:8px;" />
+            <div style="font-size:13px;color:#444;margin-bottom:12px;">{{ L.examplesLabel }}:
+                <code
+                    style="background:#f3f6fb;padding:2px 6px;border-radius:20px;margin:0 6px;">user:pass@127.0.0.1:8080</code>
+                <code
+                    style="background:#f3f6fb;padding:2px 6px;border-radius:20px;margin:0 6px;">socks5://127.0.0.1:8080:user:pass</code>
+                <code
+                    style="background:#f3f6fb;padding:2px 6px;border-radius:20px;margin:0 6px;">127.0.0.1:8080@user:pass</code>
+                <code
+                    style="background:#f3f6fb;padding:2px 6px;border-radius:20px;margin:0 6px;">127.0.0.1:8080:user:pass</code>
+            </div>
+        </el-card>
+
+        <el-row class="main-columns" :gutter="24">
+            <el-col :xs="24" :md="12">
+                <el-card shadow="never" style="margin-bottom:24px;">
+                    <div style="font-size:16px;font-weight:500;margin-bottom:12px;">{{ L.parseResult }}</div>
+                    <div class="info-list">
+                        <div class="info-row" v-for="item in infoCards" :key="item.key">
+                            <div class="info-label is-bordered-label"><i :class="item.icon"></i><span
+                                    class="label-text">{{ L[item.key] }}</span></div>
+                            <div class="info-value">{{ parsed[item.key] }}</div>
+                        </div>
+                    </div>
+                </el-card>
+
+                <el-card shadow="never">
+                    <div style="font-size:16px;font-weight:500;margin-bottom:12px;">{{ L.textAndCurl }}</div>
+                    <el-tabs type="border-card">
+                        <el-tab-pane :label="L.formattedText">
+                            <pre class="mini-pre">{{ formattedText }}</pre>
+                            <el-button type="primary" size="small" @click.stop="copy(formattedText)">{{ L.copyResult
+                                }}</el-button>
+                        </el-tab-pane>
+                        <el-tab-pane :label="L.curlTab">
+                            <pre class="mini-pre">{{ curlCommand }}</pre>
+                            <el-button type="warning" size="small" @click.stop="copy(curlCommand)">{{ L.copyCurl
+                                }}</el-button>
+                        </el-tab-pane>
+                    </el-tabs>
+                </el-card>
+            </el-col>
+
+            <el-col :xs="24" :md="12">
+                <el-card class="qr-gen-card" shadow="never" style="margin-bottom:24px;">
+                    <div style="font-size:16px;font-weight:500;margin-bottom:12px;">{{ L.qrTitle }}</div>
+                    <el-row :gutter="12">
+                        <el-col :xs="24" :sm="24" :md="12">
+                            <el-card shadow="never" style="margin-bottom:12px;width:100%;">
+                                <div style="font-weight:500;margin-bottom:8px;"><i class="fas fa-mobile-alt"></i> {{
+                                    L.shadowrocket }}</div>
+                                <div :class="['qr-outer', {'blurred': !qrVisible.shadowrocket}]">
+                                    <div class="qr-img">
+                                        <div id="qrcode-shadowrocket"></div>
+                                    </div>
+                                    <div class="qr-meta">{{ qrText.shadowrocket || '-' }}</div>
+                                </div>
+                                <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;">
+                                    <el-button size="mini"
+                                        @click.stop="qrVisible.shadowrocket = !qrVisible.shadowrocket">{{ L.toggle
+                                        }}</el-button>
+                                    <el-button size="mini" type="success"
+                                        @click.stop="downloadQr('qrcode-shadowrocket','shadowrocket.png')">{{ L.download
+                                        }}</el-button>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12">
+                            <el-card shadow="never" style="width:100%;">
+                                <div style="font-weight:500;margin-bottom:8px;"><i class="fas fa-mobile"></i> {{ L.v2ray
+                                    }}</div>
+                                <div :class="['qr-outer', {'blurred': !qrVisible.v2ray}]">
+                                    <div class="qr-img">
+                                        <div id="qrcode-v2ray"></div>
+                                    </div>
+                                    <div class="qr-meta">{{ qrText.v2ray || '-' }}</div>
+                                </div>
+                                <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;">
+                                    <el-button size="mini" @click.stop="qrVisible.v2ray = !qrVisible.v2ray">{{ L.toggle
+                                        }}</el-button>
+                                    <el-button size="mini" type="success"
+                                        @click.stop="downloadQr('qrcode-v2ray','v2ray.png')">{{ L.download
+                                        }}</el-button>
+                                </div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                </el-card>
+
+                <el-card shadow="never" style="margin-bottom:24px;">
+                    <div style="font-size:16px;font-weight:500;margin-bottom:12px;">{{ L.otherFormats }}</div>
+                    <el-select v-model="otherFormatIndex" :placeholder="L.selectFormat" size="small"
+                        style="width:100%;margin-bottom:8px;">
+                        <el-option v-for="(o, idx) in otherFormatOptions" :key="idx" :label="o.label"
+                            :value="idx"></el-option>
+                    </el-select>
+                    <pre class="mini-pre">{{ otherFormatValue }}</pre>
+                    <el-button size="small" @click.stop="copy(otherFormatValue)">{{ L.copyFormat }}</el-button>
+                </el-card>
+
+            </el-col>
+        </el-row>
+
+        <el-card shadow="never" style="margin-top:24px;">
+            <div style="font-size:16px;font-weight:500;margin-bottom:8px;">{{ L.promoTitle }}</div>
+            <div style="color:#666;font-size:14px;">{{ L.promoDesc }}</div>
+            <el-button type="primary" style="margin-top:12px;" onclick="window.open('https://www.quarkip.com/', '')">{{
+                L.startTrial
+                }}</el-button>
+        </el-card>
+        </el-col>
+        </el-row>
+    </div>
+
+    <script>
+        const TRANSLATIONS = {
+            zh: {
+                appTitle: '代理解析小幫手',
+                openQr: '进入QuarkIP',
+                copyLink: '複製連結',
+                inputTitle: '代理輸入',
+                inputLabel: '請輸入代理訊息',
+                inputPlaceholder: '如：socks5://127.0.0.1:8080:user:pass',
+                alertTitle: '支援多種格式自動辨識，輸入時即時解析。',
+                examplesLabel: '範例',
+                parseResult: '解析結果',
+                textAndCurl: '文本與 CURL 指令',
+                formattedText: '格式化文本',
+                curlTab: 'CURL 指令',
+                copyResult: '複製結果',
+                copyCurl: '複製 CURL',
+                qrTitle: 'QR 生成',
+                shadowrocket: 'ShadowRocket',
+                v2ray: 'v2ray',
+                toggle: '顯示/隱藏',
+                copy: '複製',
+                download: '下載',
+                otherFormats: '其他格式轉換',
+                selectFormat: '選擇格式',
+                copyFormat: '複製格式',
+                promoTitle: 'QuarkIP',
+                promoDesc: '用最簡單的方式開始使用代理服務，免設定、無技术門、連線即用，QuarkIP 提供完整的優質代理方案，包括靜態住宅代理、動態住宅代理、數據中心代理、數據中心 IPv6 代理。無論您需要高匿名性、大規模爬取或特定地區訪問，我們的代理均針對效能、靈活性與可靠性進行優化。',
+                startTrial: '開始試用',
+                protocol: '協議',
+                host: '主機',
+                port: '連接埠',
+                username: '賬號',
+                password: '密碼',
+                unknownProtocol: '未知',
+                curlError: '僅支援 HTTP/HTTPS 與 SOCKS5 協定',
+                curlEmpty: '請輸入正確的代理資訊以產生測試指令',
+                copied: '已複製！',
+                copyFailed: '複製失敗',
+                format1: 'user:pass@host:port',
+                format2: 'protocol://host:port:user:pass',
+                format3: 'host:port@user:pass',
+                format4: 'host:port:user:pass'
+            },
+            en: {
+                appTitle: 'Proxy Parser Helper',
+                openQr: 'Open QuarkIP',
+                copyLink: 'Copy Link',
+                inputTitle: 'Proxy Input',
+                inputLabel: 'Enter proxy info',
+                inputPlaceholder: 'e.g.: socks5://127.0.0.1:8080:user:pass',
+                alertTitle: 'Supports many formats; it will parse as you type.',
+                examplesLabel: 'Examples',
+                parseResult: 'Parsed Result',
+                textAndCurl: 'Text & CURL',
+                formattedText: 'Formatted Text',
+                curlTab: 'CURL Command',
+                copyResult: 'Copy Result',
+                copyCurl: 'Copy CURL',
+                qrTitle: 'QR Generator',
+                shadowrocket: 'ShadowRocket',
+                v2ray: 'v2ray',
+                toggle: 'Show/Hide',
+                copy: 'Copy',
+                download: 'Download',
+                otherFormats: 'Other Format Conversions',
+                selectFormat: 'Select format',
+                copyFormat: 'Copy format',
+                promoTitle: 'QuarkIP',
+                promoDesc: 'The simplest way to start using proxies,No setup fuss. No tech stress. Just connect and go.QuarkIP offers a full suite of premium proxies, including Residential Proxies, Datacenter Proxies, Datacenter IPv6 Proxies, and Rotating Proxies. Whether you need high anonymity, large-scale scraping, or geo-targeted access, our proxies are optimized for performance, flexibility, and reliability.',
+                startTrial: 'Start Trial',
+                protocol: 'Protocol',
+                host: 'Host',
+                port: 'Port',
+                username: 'Username',
+                password: 'Password',
+                unknownProtocol: 'unknown',
+                curlError: 'Only HTTP/HTTPS and SOCKS5 protocols are supported',
+                curlEmpty: 'Enter a valid proxy to generate test command',
+                copied: 'Copied!',
+                copyFailed: 'Copy failed',
+                format1: 'user:pass@host:port',
+                format2: 'protocol://host:port:user:pass',
+                format3: 'host:port@user:pass',
+                format4: 'host:port:user:pass'
+            }
+        };
+
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    lang: 'zh',
+                    form: { proxy: '' },
+                    parsed: { protocol: '-', host: '-', port: '-', username: '-', password: '-' },
+                    formattedText: '-',
+                    curlCommand: '-',
+                    showQr: false,
+                    qrText: { shadowrocket: '', v2ray: '' },
+                    qrVisible: { shadowrocket: false, v2ray: false },
+                    qrInstances: { shadowrocket: null, v2ray: null },
+                    debounceTimer: null,
+                    otherFormatIndex: 0,
+                    otherFormatValue: '-',
+                    infoCards: [
+                        { key: 'protocol', icon: 'fas fa-network-wired' },
+                        { key: 'host', icon: 'fas fa-server' },
+                        { key: 'port', icon: 'fas fa-plug' },
+                        { key: 'username', icon: 'fas fa-user' },
+                        { key: 'password', icon: 'fas fa-lock' }
+                    ]
+                };
+            },
+            computed: {
+                L() { return TRANSLATIONS[this.lang] || TRANSLATIONS.zh; },
+                otherFormatOptions() {
+                    return [
+                        { label: this.L.format1, tpl: o => `${o.username}:${o.password}@${o.host}:${o.port}` },
+                        { label: this.L.format2, tpl: o => `${o.protocol}://${o.host}:${o.port}:${o.username}:${o.password}` },
+                        { label: this.L.format3, tpl: o => `${o.host}:${o.port}@${o.username}:${o.password}` },
+                        { label: this.L.format4, tpl: o => `${o.host}:${o.port}:${o.username}:${o.password}` }
+                    ];
+                }
+            },
+            watch: {
+                'form.proxy': function (nv) {
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => {
+                        this.syncUrlParam(nv);
+                        const p = this.parseProxy(nv);
+                        this.updateOutputs(p);
+                        this.generateQR(p);
+                        this.updateOtherFormats(p);
+                    }, 220);
+                },
+                otherFormatIndex() { this.updateOtherFormats(this.parsed); },
+                // 当语言切换时，重新生成依赖翻译的输出
+                lang() {
+                    const p = this.parseProxy(this.form.proxy || '');
+                    this.updateOutputs(p);
+                    this.updateOtherFormats(p);
+                    this.generateQR(p);
+                }
+            },
+            methods: {
+                setLang(cmd) { this.lang = cmd === 'en' ? 'en' : 'zh'; this.syncLangParam(); },
+                openQrPage() { window.open('https://www.quarkip.com/'); },
+                copyLink() { this.copy(window.location.href); },
+                copy(text) {
+                    if (!text) { this.$message.warning(this.L.curlEmpty); return; }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(() => { this.$message.success(this.L.copied); }).catch(() => { this.$message.error(this.L.copyFailed); });
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try {
+                            document.execCommand('copy');
+                            this.$message.success(this.L.copied);
+                        } catch (e) {
+                            this.$message.error(this.L.copyFailed);
+                        }
+                        ta.remove();
+                    }
+                },
+                syncUrlParam(val) {
+                    try {
+                        const url = new URL(window.location);
+                        const encoded = this.toBase64Url(val);
+                        if (encoded) url.searchParams.set('proxyinfo', encoded); else url.searchParams.delete('proxyinfo');
+                        if (this.lang) url.searchParams.set('lang', this.lang);
+                        history.replaceState({}, '', url);
+                    } catch (e) { console.warn(e); }
+                },
+                syncLangParam() {
+                    try {
+                        const url = new URL(window.location);
+                        if (this.lang) url.searchParams.set('lang', this.lang); else url.searchParams.delete('lang');
+                        history.replaceState({}, '', url);
+                    } catch (e) { console.warn(e); }
+                },
+                toBase64Url(str) {
+                    try {
+                        const b = btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p) => String.fromCharCode('0x' + p)));
+                        return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    } catch (e) { return ''; }
+                },
+                fromBase64UrlMaybe(s) {
+                    if (!s) return null;
+                    try {
+                        let b = s.replace(/-/g, '+').replace(/_/g, '/');
+                        while (b.length % 4) b += '=';
+                        return decodeURIComponent(Array.prototype.map.call(atob(b), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                    } catch (e) { return null; }
+                },
+                parseProxy(str) {
+                    str = (str || '').trim();
+                    const out = { protocol: this.L.unknownProtocol, host: '-', port: '-', username: '-', password: '-' };
+                    if (!str) return out;
+                    let tmp = str;
+                    let protoMatch = tmp.match(/^([a-zA-Z0-9]+):\/\//);
+                    if (protoMatch) {
+                        out.protocol = protoMatch[1].toLowerCase();
+                        tmp = tmp.substring(protoMatch[0].length);
+                        let parts = tmp.split(':');
+                        if (parts.length >= 4) {
+                            out.host = parts[0];
+                            out.port = parts[1];
+                            out.username = parts[2];
+                            out.password = parts.slice(3).join(':');
+                            return out;
+                        }
+                    }
+                    let m = str.match(/^([^:@]+):([^:@]+)@([^:@]+):(\d+)$/);
+                    if (m) { out.username = m[1]; out.password = m[2]; out.host = m[3]; out.port = m[4]; return out; }
+                    m = str.match(/^([^:@]+):(\d+)@([^:@]+):([^:@]+)$/);
+                    if (m) { out.host = m[1]; out.port = m[2]; out.username = m[3]; out.password = m[4]; return out; }
+                    m = str.match(/^([^:]+):(\d+):([^:]+):([^:]+)$/);
+                    if (m) { out.host = m[1]; out.port = m[2]; out.username = m[3]; out.password = m[4]; return out; }
+                    m = str.match(/^([^:]+):([^:]+)@([^:]+):(\d+)$/);
+                    if (m) { out.username = m[1]; out.password = m[2]; out.host = m[3]; out.port = m[4]; return out; }
+                    const parts = str.split(/[:@]/);
+                    if (parts.length >= 4) {
+                        out.username = parts[0] || out.username;
+                        out.password = parts[1] || out.password;
+                        out.host = parts[2] || out.host;
+                        out.port = parts[3] || out.port;
+                    }
+                    return out;
+                },
+                updateOutputs(parsed) {
+                    this.parsed = Object.assign({}, parsed);
+                    this.formattedText = `${this.L.protocol}：${(parsed.protocol || this.L.unknownProtocol).toLowerCase()}\n${this.L.host}：${parsed.host}\n${this.L.port}：${parsed.port}\n${this.L.username}：${parsed.username}\n${this.L.password}：${parsed.password}`;
+                    let curl = '';
+                    if (parsed.host !== '-' && parsed.port !== '-') {
+                        const proto = (parsed.protocol && parsed.protocol !== this.L.unknownProtocol) ? parsed.protocol.toLowerCase() : 'http';
+                        if (proto === 'socks5') {
+                            const auth = (parsed.username !== '-' && parsed.password !== '-') ? `${parsed.username}:${parsed.password}@` : '';
+                            curl = `curl -x "socks5h://${auth}${parsed.host}:${parsed.port}" ip-api.com`;
+                        } else if (proto === 'http' || proto === 'https') {
+                            const auth = (parsed.username !== '-' && parsed.password !== '-') ? `${parsed.username}:${parsed.password}@` : '';
+                            curl = `curl -x "${proto}://${auth}${parsed.host}:${parsed.port}" ip-api.com`;
+                        } else {
+                            curl = this.L.curlError;
+                        }
+                    } else {
+                        curl = this.L.curlEmpty;
+                    }
+                    this.curlCommand = curl;
+                },
+                generateQR(parsed) {
+                    const raw = (this.form.proxy || '').trim();
+                    const clearQr = () => {
+                        this.showQr = false;
+                        this.qrText.shadowrocket = '';
+                        this.qrText.v2ray = '';
+                        this.qrVisible.shadowrocket = false;
+                        this.qrVisible.v2ray = false;
+                        try {
+                            const el1 = document.getElementById('qrcode-shadowrocket'); if (el1) el1.innerHTML = '';
+                            const el2 = document.getElementById('qrcode-v2ray'); if (el2) el2.innerHTML = '';
+                        } catch (e) { }
+                        if (this.qrInstances.shadowrocket) { this.qrInstances.shadowrocket = null; }
+                        if (this.qrInstances.v2ray) { this.qrInstances.v2ray = null; }
+                    };
+
+                    if (!raw) { clearQr(); return; }
+                    let protocolInput = '';
+                    let finalProto = '';
+                    if (raw.startsWith('socks5://')) { protocolInput = 'socks5://'; finalProto = 'socks://'; }
+                    else if (raw.startsWith('http://')) { protocolInput = 'http://'; finalProto = 'http://'; }
+                    else { clearQr(); return; }
+
+                    const tail = raw.substring(protocolInput.length);
+                    const parts = tail.split(':');
+                    if (parts.length < 4) { clearQr(); return; }
+
+                    const host = parts[0], port = parts[1], username = parts[2], password = parts.slice(3).join(':');
+                    const shadowrocketStr = `${username}:${password}@${host}:${port}`;
+                    const v2rayStr = `${username}:${password}`;
+                    const shadowrocketEncoded = btoa(shadowrocketStr);
+                    const v2rayEncoded = btoa(v2rayStr);
+                    const shadowrocketQR = finalProto + shadowrocketEncoded;
+                    const v2rayQR = finalProto + v2rayEncoded + '@' + host + ':' + port;
+
+                    this.showQr = true;
+                    this.qrText.shadowrocket = shadowrocketQR;
+                    this.qrText.v2ray = v2rayQR;
+
+                    this.$nextTick(() => {
+                        const measure = (containerId) => {
+                            const container = document.getElementById(containerId);
+                            if (!container) return 220;
+                            const parent = container.closest('.qr-img');
+                            if (!parent) return 220;
+                            const rect = parent.getBoundingClientRect();
+                            const size = Math.min(rect.width, rect.height, 360);
+                            return Math.max(120, Math.floor(size));
+                        };
+
+                        const size1 = measure('qrcode-shadowrocket');
+                        const size2 = measure('qrcode-v2ray');
+
+                        if (this.qrInstances.shadowrocket) { document.getElementById('qrcode-shadowrocket').innerHTML = ''; this.qrInstances.shadowrocket = null; }
+                        if (this.qrInstances.v2ray) { document.getElementById('qrcode-v2ray').innerHTML = ''; this.qrInstances.v2ray = null; }
+
+                        this.qrInstances.shadowrocket = new QRCode(document.getElementById('qrcode-shadowrocket'), { text: shadowrocketQR, width: size1, height: size1, correctLevel: QRCode.CorrectLevel.Q });
+                        this.qrInstances.v2ray = new QRCode(document.getElementById('qrcode-v2ray'), { text: v2rayQR, width: size2, height: size2, correctLevel: QRCode.CorrectLevel.Q });
+                    });
+                },
+                updateOtherFormats(parsed) {
+                    if (!parsed || parsed.host === '-' || parsed.port === '-') { this.otherFormatValue = '-'; return; }
+                    const tpl = this.otherFormatOptions[this.otherFormatIndex].tpl(parsed);
+                    this.otherFormatValue = tpl;
+                },
+                downloadQr(containerId, filename) {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    const img = container.querySelector('img');
+                    const canvas = container.querySelector('canvas');
+                    let dataUrl = null;
+                    if (img && img.src) dataUrl = img.src;
+                    else if (canvas) dataUrl = canvas.toDataURL('image/png');
+                    if (!dataUrl) return;
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = filename || 'qrcode.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                }
+            },
+            mounted() {
+                const params = new URLSearchParams(window.location.search);
+                const proxyinfo = params.get('proxyinfo');
+                const proxy = params.get('proxy');
+                const langParam = params.get('lang');
+
+                if (langParam && (langParam === 'en' || langParam === 'zh')) this.lang = langParam;
+
+                let decoded = null;
+                if (proxyinfo) decoded = this.fromBase64UrlMaybe(proxyinfo);
+                else if (proxy) decoded = decodeURIComponent(proxy || '');
+                if (decoded !== null) { this.form.proxy = decoded; }
+
+                const p = this.parseProxy(this.form.proxy || '');
+                this.updateOutputs(p);
+                this.generateQR(p);
+                this.updateOtherFormats(p);
+
+                this._onResize = () => {
+                    const p2 = this.parseProxy(this.form.proxy || '');
+                    if (this._resizeTimer) clearTimeout(this._resizeTimer);
+                    this._resizeTimer = setTimeout(() => { this.generateQR(p2); }, 150);
+                };
+                window.addEventListener('resize', this._onResize);
+                // ensure lang param is present in URL
+                this.syncLangParam();
+            },
+            beforeDestroy() {
+                try { window.removeEventListener('resize', this._onResize); if (this._resizeTimer) clearTimeout(this._resizeTimer); } catch (e) { }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
